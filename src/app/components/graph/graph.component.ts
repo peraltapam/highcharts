@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import * as Highcharts from 'highcharts';
-import { DataService } from '../data.service';
+import { DataService } from '../../service/data.service';
 
 @Component({
   selector: 'app-graph',
@@ -11,6 +11,7 @@ import { DataService } from '../data.service';
 export class GraphComponent implements OnInit {
 
   loadTemplate = false;
+  showErrorMsg = false;
 
   chartOptions = {
     title: {
@@ -19,7 +20,7 @@ export class GraphComponent implements OnInit {
       align: 'left',
       style: {
         textTransform: 'uppercase',
-        fontWeight: 'bold'
+        font: 'bold 18px "Poppins", sans-serif'
       }
     },
     subtitle: {
@@ -27,13 +28,17 @@ export class GraphComponent implements OnInit {
       align: 'left',
       style: {
         fontSize: '10px',
-        position: 'absolute'
+        position: 'absolute',
+        font: '9px "Poppins", sans-serif'
       }
     },
     legend: {
       itemDistance: 10,
       verticalAlign: 'top',
-      x: 0
+      x: 0,
+      itemStyle: {
+        font: '"Poppins", sans-serif'
+      },
     },
     yAxis: {
       title: { text: '' },
@@ -53,7 +58,7 @@ export class GraphComponent implements OnInit {
       }
     },
     tooltip: {
-      formatter: function () {
+      formatter: function() {
         return `<div>${this.series.name}</div><br/>
           <span style="color:${this.series.color}">\u25CF</span><span>${this.x} :</span>
           <strong>R$ ${this.y.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}</strong>`;
@@ -69,7 +74,7 @@ export class GraphComponent implements OnInit {
     series: []
   };
 
-  rawSeriesCopy = [];
+  rawSeries = [];
 
   Highcharts = Highcharts;
 
@@ -80,22 +85,21 @@ export class GraphComponent implements OnInit {
     this.dataService.getData().subscribe(
       data => {
         if(data.success) {
-          const revenueData =  data.metrics.revenue_by_medium;
+          const revenueData = data.metrics.revenue_by_medium;
           
           // set title
           const dateRange = this.getDateRangeText(data.start_date, data.end_date);
           this.chartOptions.title.text = `<span>${revenueData.title}</span>
-            <span style="color:#b8b8b8; font-size:12px;margin-left:10px">${dateRange}</span>`;
+            <span style="color:#b8b8b8; font-size:12px; margin-left:10px">${dateRange}</span>`;
 
           // set subtitle
           this.chartOptions.subtitle.text = revenueData.description;
 
           // set series data
-          let rawSeries = revenueData.data.series;
-          this.rawSeriesCopy = [...rawSeries];
+          this.rawSeries = revenueData.data.series;
 
           // create series array of objects
-          this.createSeries(rawSeries[0].data);
+          this.createSeries(this.rawSeries[0].data);
 
           // populate series arrays
           for(let i = 0; i < this.chartOptions.series.length; i++) {
@@ -103,14 +107,17 @@ export class GraphComponent implements OnInit {
           }
 
           // set x axis data labels
-          this.chartOptions.xAxis.categories = rawSeries.map( (serie: {name: string, data: []}) => {
+          this.chartOptions.xAxis.categories = this.rawSeries.map( (serie: {name: string, data: []}) => {
             return this.formatBrDate(serie.name);
           });
 
           this.setChart();
+        } else {
+          this.showErrorMsg = true;
         }
       },
       error => {
+        this.showErrorMsg = true;
         throw new Error(error);
       }
     )
@@ -135,7 +142,7 @@ export class GraphComponent implements OnInit {
    * @return {array} array of specific series type/name
    */
   getDataByType(type: string): Array<any> {
-    return this.rawSeriesCopy.map((element: any) => parseFloat(element.data[type].replace(",", ".")));
+    return [...this.rawSeries].map((element: any) => parseFloat(element.data[type].replace(",", ".")));
   }
 
   /**

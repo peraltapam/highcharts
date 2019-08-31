@@ -1,10 +1,10 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
+import { NgModule } from '@angular/core';
 
-import { HighchartsChartModule } from 'highcharts-angular';
 import { AppComponent } from './app.component';
-import { GraphComponent } from './graph/graph.component';
+import { GraphComponent } from './components/graph/graph.component';
+import { HighchartsChartModule } from 'highcharts-angular';
 
 @NgModule({
   declarations: [
